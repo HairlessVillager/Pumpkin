@@ -230,19 +230,16 @@ pub fn normalize_nbt_bytes(bytes: &[u8]) -> Result<Bytes, Error> {
     let cursor = Cursor::new(bytes);
     let nbt_result = Nbt::read(&mut NbtReadHelper::new(cursor));
 
-    match nbt_result {
-        Ok(nbt) => {
-            // Successfully parsed as named NBT
-            let normalized_nbt = Nbt::new(nbt.name, nbt.root_tag.normalize());
-            Ok(normalized_nbt.write())
-        }
-        Err(_) => {
-            // Try as unnamed NBT
-            let cursor = Cursor::new(bytes);
-            let nbt = Nbt::read_unnamed(&mut NbtReadHelper::new(cursor))?;
-            let normalized_nbt = Nbt::new(nbt.name, nbt.root_tag.normalize());
-            Ok(normalized_nbt.write_unnamed())
-        }
+    if let Ok(nbt) = nbt_result {
+        // Successfully parsed as named NBT
+        let normalized_nbt = Nbt::new(nbt.name, nbt.root_tag.normalize());
+        Ok(normalized_nbt.write())
+    } else {
+        // Try as unnamed NBT
+        let cursor = Cursor::new(bytes);
+        let nbt = Nbt::read_unnamed(&mut NbtReadHelper::new(cursor))?;
+        let normalized_nbt = Nbt::new(nbt.name, nbt.root_tag.normalize());
+        Ok(normalized_nbt.write_unnamed())
     }
 }
 
@@ -646,11 +643,12 @@ mod test {
     }
 
     #[test]
-    fn test_normalize_nbt_bytes() {
+    fn normalize_nbt_bytes_works() {
         use crate::normalize_nbt_bytes;
         use serde::{Deserialize, Serialize};
 
         #[derive(Serialize, Deserialize, Debug, PartialEq)]
+        #[allow(clippy::struct_field_names)]
         struct TestStruct {
             z_field: String,
             a_field: i32,
@@ -686,7 +684,7 @@ mod test {
     }
 
     #[test]
-    fn test_normalize_nested_compounds() {
+    fn normalize_nested_compounds() {
         use crate::normalize_nbt_bytes;
         #[derive(Serialize, Deserialize, Debug, PartialEq)]
         struct Inner {
@@ -725,7 +723,7 @@ mod test {
     }
 
     #[test]
-    fn test_normalize_with_lists() {
+    fn normalize_with_lists() {
         use crate::normalize_nbt_bytes;
         #[derive(Serialize, Deserialize, Debug, PartialEq)]
         struct TestStruct {

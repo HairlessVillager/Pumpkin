@@ -117,6 +117,11 @@ impl ChunkData {
                 position.x, position.y, chunk_data.x_pos, chunk_data.z_pos,
             )));
         }
+
+        Ok(Self::from_nbt(chunk_data))
+    }
+
+    pub fn from_nbt(chunk_data: ChunkNbt) -> Self {
         let (block_lights, sky_lights, block_palettes, biome_palettes) = chunk_data
             .sections
             .into_iter()
@@ -166,11 +171,11 @@ impl ChunkData {
             biome_sections: RwLock::new(biome_palettes.into_boxed_slice()),
             min_y,
         };
-        Ok(Self {
+        Self {
             section,
             heightmap: std::sync::Mutex::new(chunk_data.heightmaps),
-            x: position.x,
-            z: position.y,
+            x: chunk_data.x_pos,
+            z: chunk_data.x_pos,
             // This chunk is read from disk, so it has not been modified
             dirty: AtomicBool::new(false),
             block_ticks: ChunkTickScheduler::from_iter(chunk_data.block_ticks),
@@ -188,7 +193,7 @@ impl ChunkData {
             light_engine: std::sync::Mutex::new(light_engine),
             light_populated: AtomicBool::new(chunk_data.light_correct),
             status: chunk_data.status,
-        })
+        }
     }
 
     async fn internal_to_bytes(&self) -> Result<Bytes, ChunkSerializingError> {
@@ -369,18 +374,18 @@ impl ChunkEntityData {
     }
 }
 
-#[derive(Serialize, Deserialize)]
-struct ChunkSectionNBT {
+#[derive(Serialize, Deserialize, Clone)]
+pub struct ChunkSectionNBT {
     #[serde(skip_serializing_if = "Option::is_none")]
-    block_states: Option<ChunkSectionBlockStates>,
+    pub block_states: Option<ChunkSectionBlockStates>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    biomes: Option<ChunkSectionBiomes>,
+    pub biomes: Option<ChunkSectionBiomes>,
     #[serde(rename = "BlockLight", skip_serializing_if = "Option::is_none")]
-    block_light: Option<Box<[u8]>>,
+    pub block_light: Option<Box<[u8]>>,
     #[serde(rename = "SkyLight", skip_serializing_if = "Option::is_none")]
-    sky_light: Option<Box<[u8]>>,
+    pub sky_light: Option<Box<[u8]>>,
     #[serde(rename = "Y")]
-    y: i8,
+    pub y: i8,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -492,9 +497,9 @@ impl Default for LightContainer {
     }
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 #[serde(rename_all = "PascalCase")]
-struct ChunkNbt {
+pub struct ChunkNbt {
     data_version: i32,
     #[serde(rename = "xPos")]
     x_pos: i32,

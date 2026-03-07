@@ -252,6 +252,21 @@ impl<V: Hash + Eq + Copy + Default, const DIM: usize> PalettedContainer<V, DIM> 
         }
     }
 
+    pub fn from_iter<I>(iter: I) -> Self
+    where
+        I: IntoIterator<Item = V>,
+    {
+        let mut cube = Box::new([[[V::default(); DIM]; DIM]; DIM]);
+        let flattened = cube.as_flattened_mut().as_flattened_mut();
+        for (i, val) in iter.into_iter().enumerate() {
+            if i >= Self::VOLUME {
+                break;
+            }
+            flattened[i] = val;
+        }
+        Self::from_cube(cube)
+    }
+
     pub fn is_empty(&self) -> bool {
         match self {
             Self::Homogeneous(value) => *value == V::default(),

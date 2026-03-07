@@ -111,7 +111,6 @@ pub struct ChunkSections {
 }
 
 impl ChunkSections {
-    #[cfg(test)]
     #[must_use]
     pub fn dump_blocks(&self) -> Vec<u16> {
         self.block_sections
@@ -122,7 +121,6 @@ impl ChunkSections {
             .collect()
     }
 
-    #[cfg(test)]
     #[must_use]
     pub fn dump_biomes(&self) -> Vec<u8> {
         self.biome_sections
@@ -131,6 +129,35 @@ impl ChunkSections {
             .iter()
             .flat_map(|section| section.iter().copied())
             .collect()
+    }
+
+    pub fn from_blocks_biomes(blocks: &[u16], biomes: &[u8]) -> Self {
+        let block_sections_vec: Vec<BlockPalette> = blocks
+            .chunks_exact(BlockPalette::VOLUME)
+            .map(|chunk| BlockPalette::from_iter(chunk.iter().copied()))
+            .collect();
+
+        let biome_sections_vec: Vec<BiomePalette> = biomes
+            .chunks_exact(BiomePalette::VOLUME)
+            .map(|chunk| BiomePalette::from_iter(chunk.iter().copied()))
+            .collect();
+
+        let count = block_sections_vec.len();
+
+        assert_eq!(
+            count,
+            biome_sections_vec.len(),
+            "Block sections count ({}) must match Biome sections count ({})",
+            count,
+            biome_sections_vec.len()
+        );
+
+        Self {
+            count,
+            block_sections: RwLock::new(block_sections_vec.into_boxed_slice()),
+            biome_sections: RwLock::new(biome_sections_vec.into_boxed_slice()),
+            min_y: -64, // TODO: replace with dimension.min_y
+        }
     }
 }
 

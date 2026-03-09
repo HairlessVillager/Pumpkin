@@ -334,7 +334,11 @@ impl BiomePalette {
         let palette = nbt
             .palette
             .into_iter()
-            .map(|entry| Biome::from_name(&entry.name).unwrap_or(&Biome::PLAINS).id)
+            .map(|entry| {
+                let s = entry.name.as_str();
+                let key = s.strip_prefix("minecraft:").unwrap_or(s);
+                Biome::from_name(key).unwrap_or(&Biome::PLAINS).id
+            })
             .collect::<Vec<_>>();
 
         Self::from_palette_and_packed_data(
@@ -358,7 +362,10 @@ impl BiomePalette {
             palette: palette
                 .into_iter()
                 .map(|registry_id| PaletteBiomeEntry {
-                    name: Biome::from_id(registry_id).unwrap().registry_id.into(),
+                    name: format!(
+                        "minecraft:{}",
+                        Biome::from_id(registry_id).unwrap().registry_id
+                    ),
                 })
                 .collect(),
         }

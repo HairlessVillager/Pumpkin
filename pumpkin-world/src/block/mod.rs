@@ -34,7 +34,7 @@ fn parse_block_name<'de, D: Deserializer<'de>>(
 }
 
 fn block_to_string<S: Serializer>(block: &'static Block, serializer: S) -> Result<S::Ok, S::Error> {
-    serializer.serialize_str(block.name)
+    serializer.serialize_str(format!("minecraft:{}", block.name).as_str())
 }
 
 impl BlockStateCodec {

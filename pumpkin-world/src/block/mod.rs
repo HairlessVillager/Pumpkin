@@ -28,8 +28,10 @@ fn parse_block_name<'de, D: Deserializer<'de>>(
     deserializer: D,
 ) -> Result<&'static Block, D::Error> {
     let s = String::deserialize(deserializer)?;
-    let block =
-        Block::from_name(s.as_str()).ok_or(serde::de::Error::custom("Invalid block name"))?;
+    let block = Block::from_name(s.as_str()).ok_or(serde::de::Error::custom(format!(
+        "Invalid block name: {}, please check Minecraft version",
+        s
+    )))?;
     Ok(block)
 }
 
